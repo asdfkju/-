@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+ "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+ 
+ <mapper namespace="Member">
+ 	<select id="checkId" parameterType="String" resultType="int">
+	select count(*) from member where id=#{id}
+	</select> 
+	<select id="checkEmail" parameterType="String" resultType="int">
+	select count(*) from member where email=#{email}
+	</select>
+	<insert id="createMember" parameterType="member">
+	insert into member values(#{id},#{password},#{name},#{email},#{imgname},#{imgoriname},'회원','','','')
+	</insert>
+	<select id="login" parameterType="member" resultType="member">
+	select * from member where id=#{id} and password=#{password}
+	</select>
+	
+	<select id="searchID" parameterType="member" resultType="String">
+	select id from member where name=#{name} and email=#{email}
+	</select>
+	<select id="searchPW" parameterType="member" resultType="String">
+	select password from member where id=#{id} and email=#{email}
+	</select>
+	<select id="miForm" parameterType="String" resultType="member">
+	select * from member where id=#{id}
+	</select>
+	
+	
+	<update id="keepLogin">
+    update member set sessionKey = #{sessionId}, sessionLimit = #{next} where id=#{userId}
+    </update>
+    <select id="checkUserWithSessionKey" resultType="member">
+    select * from member where sessionKey = #{sessionId} and sessionLimit > systimestamp
+    </select>
+    <select id="checkperiod" parameterType="member" resultType="int">
+    select count(*) from member where id=#{id} and password=#{password} and banperiod > systimestamp
+    </select>
+   
+    <select id="usersEmail" parameterType="String" resultType="String">
+    select email from member where id=#{id}
+    </select>
+    
+    <insert id="modifyMI" parameterType="member" >
+    <choose>
+    <when test="nopic.equals('nopic')">
+    update member set password=#{mpassword}, imgname=#{imgname}, imgoriname=#{imgoriname} where id=#{id}    
+    </when>
+    <otherwise>
+    update member set password=#{mpassword} where id=#{id}        
+    </otherwise>
+    </choose>
+    </insert>
+    <delete id="memberWithdrawal" parameterType="member">
+    delete from member where id=#{id}
+    </delete>
+    <update id="emailUpdate" parameterType="member">
+    update member set email=#{email} where id=#{id}
+    </update>
+    <select id="selectBoardLike" parameterType="boardLike" resultType="boardLike">
+    select sum(likes) as likes,sum(dislikes) as dislikes from boardlike a where bnum=#{bnum}
+    </select>
+    <select id="searchLikeUser" parameterType="boardLike" resultType="boardLike">
+    select * from boardlike where id=#{id} and bnum=#{bnum}
+    </select>
+    <insert id="like" parameterType="boardLike">
+    insert into boardlike values(boardlike_seq.nextval,#{bnum},#{id},1,0)
+    </insert>
+    <insert id="dislike" parameterType="boardLike">
+    insert into boardlike values(boardlike_seq.nextval,#{bnum},#{id},0,1)
+    </insert>
+
+
+    <update id="like2" parameterType="boardLike">
+    update boardlike set dislikes=dislikes-1,likes=likes+1 where id=#{id}
+    </update>    
+    <update id="dislike2" parameterType="boardLike">
+    update boardlike set likes=likes-1,dislikes=dislikes+1 where id=#{id}
+    </update>    
+
+    
+    
+    <update id="returnLike" parameterType="String">
+    update boardlike set likes=likes-1 where id=#{me}
+    </update>    
+    <update id="returnDislike" parameterType="String">
+    update boardlike set likes=likes-1 where id=#{me}
+    </update>
+    <delete id="deleteLike" parameterType="String">
+    delete from boardlike where id=#{me}
+    </delete>
+    <delete id="deleteDislike" parameterType="String">
+    delete from boardlike where id=#{me}
+    </delete>
+ 
+  
+    <select id="memberCount" resultType="int">
+    select count(*) from member
+    </select>
+    <select id="selectMember" parameterType="map" resultType="member">
+    <![CDATA[SELECT M.* FROM (SELECT ROWNUM row_num,member.* from (select * from member where id != 'admin') member) M where row_num >= #{paging.startNum} and row_num <= #{paging.endNum}]]>
+    </select>
+    
+	
+ </mapper>

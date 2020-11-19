@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+ "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+	<typeAliases> 
+	<typeAlias type="com.fromis._9.dto.MemberDTO" alias="member"/>
+	<typeAlias type="com.fromis._9.dto.BoardDTO" alias="board"/>
+	<typeAlias type="com.fromis._9.dto.CommentsDTO" alias="comments"/>
+	<typeAlias type="com.fromis._9.dto.CommentsReplyDTO" alias="replyComments"/>
+	<typeAlias type="com.fromis._9.dto.ReportDTO" alias="report"/>
+	<typeAlias type="com.fromis._9.dto.BoardLikeDTO" alias="boardLike"/>
+	<typeAlias type="com.fromis._9.dto.CommentsLikeDTO" alias="commentsLike"/>
+	<typeAlias type="com.fromis._9.page.Paging" alias="paging"/>
+	<typeAlias type="com.fromis._9.page.CommentsPaging" alias="commentspaging"/>
+	<typeAlias type="com.fromis._9.dto.BoardPicDTO" alias="boardPic"/>
+		<typeAlias type="com.fromis._9.dto.ProductDTO" alias="product"/>
+		<typeAlias type="com.fromis._9.dto.BasketDTO" alias="basket"/>
+	
+	</typeAliases>
+</configuration>

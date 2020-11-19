@@ -1,0 +1,361 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+ "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="Board">
+
+	<select id="selectBoard" parameterType="map" resultType="board">
+    <![CDATA[SELECT B.* FROM (SELECT ROWNUM row_num,board.* from (select * from board order by bnum desc) board) B where row_num >= #{paging.startNum} and row_num <= #{paging.endNum}]]>
+	</select>
+
+	<select id="countBoard" resultType="int">
+		SELECT COUNT(*) FROM board
+	</select>
+
+	<insert id="boardWrite" parameterType="board">
+		INSERT INTO BOARD VALUES(BOARD_SEQ.NEXTVAL,#{id}, #{title}, #{contents}, 0,
+		'N',to_char(sysdate,'YYYY.MM.DD'))
+	</insert>
+
+	<insert id="boardPic" parameterType="board">
+		<selectKey resultType="int" keyProperty="mkey"
+			order="BEFORE">
+			SELECT MAX(BNUM) FROM BOARD
+		</selectKey>
+		INSERT INTO BOARDPIC VALUES(BOARDPIC_SEQ.NEXTVAL, #{mkey},
+		#{filename}, #{orifilename})
+	</insert>
+
+	<insert id="writeComments" parameterType="comments">
+		<choose>
+			<when test="expic.equals('yes')">
+				INSERT INTO COMMENTS VALUES(comments_SEQ.NEXTVAL,#{id}, #{bnum},
+				#{contents},to_char(sysdate,'YYYY.MM.DD'),#{filename},#{orifilename},'no',0,'x')
+			</when>
+			<otherwise>
+				INSERT INTO COMMENTS VALUES(comments_SEQ.NEXTVAL,#{id}, #{bnum},
+				#{contents},to_char(sysdate,'YYYY.MM.DD'),#{filename,jdbcType=VARCHAR},#{orifilename,jdbcType=VARCHAR},'no',0,'x')
+			</otherwise>
+		</choose>
+	</insert>
+
+	<insert id="modifyComments" parameterType="comments">
+		<choose>
+			<when test="expic.equals('yes')">
+				update comments set contents=#{contents}, filename=#{filename},
+				orifilename=#{orifilename} where cnum=#{cnum}
+			</when>
+			<otherwise>
+				update comments set contents=#{contents} where cnum=#{cnum}
+			</otherwise>
+		</choose>
+	</insert>
+
+
+	<select id="reportCheck" parameterType="int" resultType="String">
+		select report from board where bnum=#{bnum}
+	</select>
+
+	<select id="viewPost" parameterType="int" resultType="board">
+		select b.*,to_char(writedate,'YYYY-MM-DD') as wd from board b where
+		bnum=#{bnum}
+	</select>
+
+
+	<update id="updateHits" parameterType="int">
+		update board set hits=hits+1 where bnum=#{bnum}
+	</update>
+
+	<select id="viewPostPic" parameterType="int" resultType="board">
+		select filename from boardpic where bnum=#{bnum}
+	</select>
+
+	<update id="updatePost" parameterType="board">
+		update board set
+		title=#{title},contents=#{contents},writedate=to_char(sysdate,'YYYY.MM.DD')
+		where bnum=#{bnum}
+	</update>
+
+
+	<insert id="updatePic" parameterType="board">
+		<selectKey resultType="int" keyProperty="mkey"
+			order="BEFORE">
+			SELECT bnum FROM BOARD where bnum=#{bnum}
+		</selectKey>
+		INSERT INTO BOARDPIC VALUES(BOARDPIC_SEQ.NEXTVAL, #{mkey},
+		#{filename}, #{orifilename})
+	</insert>
+
+
+	<delete id="deletePic" parameterType="board">
+		delete from boardpic where bnum=#{bnum}
+	</delete>
+
+	<update id="deleteComments" parameterType="int">
+		update comments set del='yes' where cnum=#{cnum}
+	</update>
+
+	<select id="bestPost" resultType="board">
+		SELECT B.* FROM (select rownum ohits,board.* from (select * from board order
+		by hits desc) board) B where ohits between 1 and 5
+	</select>
+
+	<update id="upHits" parameterType="board">
+		update board set hits=hits+1 where bnum=#{bnum}
+	</update>
+
+	<select id="callPostForm" parameterType="board"
+		resultType="board">
+		select * from board where bnum=#{bnum}
+	</select>
+
+	<delete id="deletePost" parameterType="int">
+		delete from board where bnum=#{bnum}
+	</delete>
+
+
+
+
+	<select id="searchCountBoard" parameterType="map"
+		resultType="int">
+		<choose>
+			<when test="kind != null and kind.equals('제목')">
+				select count(*) from board where title like '%'||#{contents}||'%'
+			</when>
+			<when test="kind != null and kind.equals('내용')">
+				select count(*) from board where contents like '%'||#{contents}||'%'
+			</when>
+			<when test="kind != null and kind.equals('제목내용')">
+				select count(*) from board where title like '%'||#{contents}||'%' or
+				contents like '%'||#{contents}||'%'
+			</when>
+		</choose>
+	</select>
+
+	<select id="search" parameterType="map" resultType="board">
+		<choose>
+			<when test="kind != null and kind.equals('제목')">
+    <![CDATA[SELECT B.* FROM (SELECT ROWNUM row_num,board.* from (select * from board where title like '%'||#{contents}||'%' order by bnum desc) board) B where row_num >= #{paging.startNum} and row_num <= #{paging.endNum}]]>
+			</when>
+			<when test="kind != null and kind.equals('내용')">
+    <![CDATA[SELECT B.* FROM (SELECT ROWNUM row_num,board.* from (select * from board where contents like '%'||#{contents}||'%' order by bnum desc) board) B where row_num >= #{paging.startNum} and row_num <= #{paging.endNum}]]>
+			</when>
+			<when test="kind != null and kind.equals('제목내용')">
+    <![CDATA[SELECT B.* FROM (SELECT ROWNUM row_num,board.* from (select * from board where title like '%'||#{contents}||'%' or contents like '%'||#{contents}||'%' order by bnum desc) board) B where row_num >= #{paging.startNum} and row_num <= #{paging.endNum}]]>
+			</when>
+		</choose>
+	</select>
+
+	<insert id="reportPost" parameterType="report">
+		insert into report
+		values(report_seq.nextval,#{contents},#{title},#{id},#{bnum},to_char(sysdate,'YYYY-MM-DD'),'x',#{postid})
+	</insert>
+
+	<select id="bwCount" resultType="int" parameterType="board">
+		SELECT COUNT(*) FROM board where id=#{id}
+	</select>
+
+	<select id="boardWrittenByMe" parameterType="map"
+		resultType="board">
+    <![CDATA[SELECT B.* FROM (SELECT ROWNUM row_num,board.* from (select * from board where id=#{id} order by bnum desc) board) B where row_num >= #{paging.startNum} and row_num <= #{paging.endNum}]]>
+	</select>
+
+	<select id="cwCount" resultType="int" parameterType="board">
+		SELECT COUNT(*) FROM comments c,board b where c.id=#{id} and b.bnum=c.bnum
+	</select>
+
+	<select id="commentsWrittenByMe" parameterType="map"
+		resultType="comments">
+    <![CDATA[SELECT z.* FROM (SELECT ROWNUM row_num,board.* from (SELECT b.title,c.contents FROM board b,comments c  
+   WHERE b.bnum = c.bnum and c.id=#{id}
+ order by c.bnum desc) board) z where row_num >= #{paging.startNum} and row_num <= #{paging.endNum}]]>
+	</select>
+
+	<select id="reportCount" resultType="int">
+		select count(*) from report
+	</select>
+
+	<select id="selectReport" parameterType="map"
+		resultType="report">
+    <![CDATA[SELECT r.* FROM (SELECT ROWNUM row_num,report.* from (SELECT * FROM report order by repnum desc) report) r where row_num >= #{paging.startNum} and row_num <= #{paging.endNum}]]>
+	</select>
+
+	<select id="selectReportPost" parameterType="int"
+		resultType="report">
+		select * from report where repnum = #{repnum}
+	</select>
+
+	<update id="acceptReport" parameterType="int">
+		update report set acceptreport='y' where repnum=#{repnum}
+	</update>
+
+	<select id="searchPostId" parameterType="int"
+		resultType="String">
+		select postid from report where repnum=#{repnum}
+	</select>
+	<update id="loginban" parameterType="map">
+		update member set banperiod=#{limit} where id=#{id}
+	</update>
+
+	<select id="popularPost" resultType="board">
+		SELECT a.* FROM (select rownum division,board.* from (select
+		b.*,l.likes-l.dislikes as sums from board b,boardlike l where b.bnum =
+		l.bnum and l.likes-l.dislikes > 0 order by sums desc) board) a where
+		division between 1 and 5
+	</select>
+
+	<select id="selectBoardPic" resultType="boardPic">
+		select * from boardpic
+	</select>
+
+	<select id="selectBoardByPhoto" parameterType="map"
+		resultType="board">
+    <![CDATA[SELECT B.* FROM (SELECT ROWNUM row_num,board.* from (select * from board where filename != null order by bnum desc) board) B where row_num >= #{paging.startNum} and row_num <= #{paging.endNum}]]>
+	</select>
+
+
+
+	<select id="boardListPagingByPhoto" parameterType="map"
+		resultType="board">
+ <![CDATA[SELECT z.* FROM (SELECT ROWNUM row_num,board.* from (select distinct b.* from board b,boardpic p where b.bnum=p.bnum order by b.bnum desc) board) z where row_num >= #{paging.startNum} and row_num <= #{paging.endNum}]]>
+	</select>
+	<select id="countBoardByPhoto" resultType="int">
+		select count(*) from (select distinct b.bnum from board b,boardpic p where
+		b.bnum=p.bnum and p.filename is not null) b
+	</select>
+	<select id="getBpnum" parameterType="int" resultType="int">
+		select min(bpno) from boardpic where bnum=#{bnum}
+	</select>
+	<select id="boardListByPhoto" parameterType="int"
+		resultType="board">
+		select c.* from (select z.* from (select b.*, bp.filename from board
+		b,boardpic bp where bp.bpno=#{bpnum} and b.bnum=bp.bnum) z) c
+	</select>
+
+	<select id="selectCommentsReplyList" resultType="replyComments">
+		select c.*,to_char(writedate,'YYYY-MM-DD') as wd from commentsreply c where
+		bnum=#{bnum}
+	</select>
+
+	<insert id="writeCommentsReply" parameterType="replyComments">
+		<choose>
+			<when test="expic.equals('yes')">
+				INSERT INTO commentsreply VALUES(commentsreply_SEQ.NEXTVAL,#{id}, #{cnum},
+				#{bnum},#{contents},#{filename},#{orifilename},to_char(sysdate,'YYYY.MM.DD'),'no')
+			</when>
+			<otherwise>
+				INSERT INTO commentsreply VALUES(commentsreply_SEQ.NEXTVAL,#{id}, #{cnum},
+				#{bnum},#{contents},#{filename,jdbcType=VARCHAR},#{orifilename,jdbcType=VARCHAR},to_char(sysdate,'YYYY.MM.DD'),'no')
+			</otherwise>
+		</choose>
+	</insert>
+
+
+	<select id="countComments" parameterType="int" resultType="int">
+		SELECT COUNT(*) FROM comments where bnum=#{bnum}
+	</select>
+	<select id="selectComments" parameterType="map"
+		resultType="comments">
+    <![CDATA[SELECT C.*,to_char(writedate,'YYYY-MM-DD') as wd FROM (SELECT ROWNUM row_num,comments.* from (select * from comments) comments where bnum=#{bnum} order by cnum asc) c where row_num >= #{commentsPaging.startNum} and row_num <= #{commentsPaging.endNum} order by c.cnum asc]]>
+	</select>
+
+	<select id="selectCommentsLike" parameterType="commentsLike"
+		resultType="int">
+		select count(*) from commentslike where id=#{id} and cnum=#{cnum}
+	</select>
+
+	<delete id="deleteCommentsLike" parameterType="commentsLike">
+		delete from commentslike where id=#{id} and cnum=#{cnum}
+	</delete>
+	<update id="resetCommentsLike" parameterType="commentsLike">
+		update comments set likes=likes-1 where cnum=#{cnum}
+	</update>
+
+	<update id="commentsLike" parameterType="commentsLike">
+		update comments set likes=likes+1 where cnum=#{cnum}
+	</update>
+	<insert id="insertCommentsLike" parameterType="commentsLike">
+		insert into commentslike values(commentsLike_seq.nextval,#{cnum},#{id})
+	</insert>
+	
+	<select id="verifyBestComments" parameterType="int" resultType="int">
+    select max(likes) as maxlikes from comments where bnum=#{bnum}
+	</select>
+	<update id="bestComments" parameterType="int">
+	update comments set best = 'o' where cnum=#{cnum}
+	</update>
+	<update id="resetPreviousBestComments" parameterType="int">
+	update comments set best = 'x' where bnum=#{bnum}
+	</update>
+	
+	<select id="selectCommentsNotPaging" parameterType="int" resultType="comments">
+	select * from comments where bnum=#{bnum}
+	</select>
+	
+	<insert id="registerProduct" parameterType="product">	
+	insert into product values(product_seq.nextval,#{name},#{contents},#{price},#{filename},#{orifilename},to_char(sysdate,'YYYY.MM.DD'),#{amount})
+	</insert>
+	
+	<select id="countProduct" resultType="int">
+	select count(*) from product
+	</select>
+	
+	<select id="selectProduct" parameterType="paging" resultType="product">
+    <![CDATA[SELECT a.* FROM (SELECT ROWNUM row_num,b.* from (select * from product) b) a where row_num >= #{startNum} and row_num <= #{endNum}]]>	
+	</select>
+	
+	<select id="selectBasket" parameterType="String" resultType="basket">
+	select * from basket where id=#{id}
+	</select>
+	
+	<insert id="containBasket" parameterType="map">
+	insert into basket values(basket_seq.nextval,#{product.pnum},#{id},#{product.amount},to_char(sysdate,'YYYY-MM-DD'),#{product.name},#{product.sum})
+	</insert>
+	
+	<select id="isContainThatProduct" parameterType="map" resultType="int">
+	select count(*) from basket where pnum=#{product.pnum} and id=#{id}
+	</select>
+	
+	<delete id="deleteThatProduct" parameterType="map">
+	delete from basket where pnum=#{product.pnum} and id=#{id}
+	</delete>
+	
+	<update id="updateBasket" parameterType="map">
+	update basket set amount=#{product.amount},sum=#{product.sum} where id=#{id} and pnum=#{product.pnum}
+	</update>
+	
+	<update id="changeAmount" parameterType="basket">
+	update basket set amount=#{amount},sum=#{sum} where id=#{id} and pnum=#{pnum}
+	</update>
+	
+	<select id="selectBasketSum" parameterType="basket" resultType="int">
+	select sum(sum) as resultSum from basket a where id=#{id}
+	</select>
+	
+	<delete id="removeThatProduct" parameterType="basket">
+	delete from basket where pnum=#{pnum} and id=#{id}
+	</delete>
+	
+	<select id="paymentUserInfo" parameterType="basket" resultType="basket">
+	select sum(sum) as resultSum,b.id from basket b where b.id=#{id} group by b.id
+	</select>
+	
+	<delete id="deleteBasket" parameterType="basket">
+	delete from basket where id=#{id}
+	</delete>
+	
+	<select id="subProduct" resultType="product">
+	select * from product
+	</select>
+	
+	<update id="insertProduct" parameterType="product">
+	update product set amount=#{amount} where pnum=#{pnum}
+	</update>
+	
+	<delete id="deleteProduct" parameterType="int">
+	delete from product where pnum=#{pnum}
+	</delete>
+
+
+
+</mapper>
